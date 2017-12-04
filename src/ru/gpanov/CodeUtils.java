@@ -76,8 +76,43 @@ class CodeUtils {
         }
     }
 
+    static void printMatrixForSharp(Code[] matrix, String prefix) {
+        System.out.println(prefix + ":---------------------");
+        if (matrix == null && matrix.length < 1) {
+            return;
+        }
+        if (matrix.length < 2) {
+            printMatrix(matrix);
+            return;
+        }
+        printMatrix(matrix);
+        int n = matrix[0].size();
+        if (n < 2) {
+            return;
+        }
+        List<Code> matrixWithZero = new ArrayList<>();
+        List<Code> matrixWithOne = new ArrayList<>();
+        for (Code code: matrix) {
+            if (code.getElements()[0] == 0) {
+                matrixWithZero.add(getReducedCode(code));
+            } else {
+                matrixWithOne.add(getReducedCode(code));
+            }
+        }
+        printMatrixForSharp(matrixWithZero.toArray(new Code[matrixWithZero.size()]), prefix + "0");
+        printMatrixForSharp(matrixWithOne.toArray(new Code[matrixWithZero.size()]), prefix + "1");
+    }
+
+    private static Code getReducedCode(Code code) {
+        int[] el = code.getElements();
+        int[] newEl = new int[code.size() - 1];
+        System.arraycopy(el, 1, newEl, 0, el.length - 1);
+        return new Code(newEl);
+    }
+
     static int findMinD(Code[] matrix) {
         Code[] allCodes = collectAllCodes(matrix);
+        printMatrixForSharp(allCodes, "");
         int minD = Integer.MAX_VALUE;
         for (Code code : allCodes) {
             int w = CodeUtils.getNumberOfOne(code);

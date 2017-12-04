@@ -80,4 +80,9 @@ public class Code {
         int[] elements = new int[n];
         return new Code(elements);
     }
+
+    @Override
+    public Code clone() {
+        return new Code(this.getElements());
+    }
 }
