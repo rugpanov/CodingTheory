@@ -85,4 +85,18 @@ public class Code {
     public Code clone() {
         return new Code(this.getElements());
     }
+
+    public int distance(Code another) {
+        if (another.size() != size()) {
+            throw new IllegalArgumentException();
+        }
+        int counter = 0;
+        int[] otherElements = another.getElements();
+        for (int i = 0; i < size(); i++) {
+            if (otherElements[i] != elements[i]) {
+                counter++;
+            }
+        }
+        return counter;
+    }
 }

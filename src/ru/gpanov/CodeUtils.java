@@ -20,7 +20,6 @@ class CodeUtils {
 
     static Code[] collectAllCodes(Code[] matrix) {
         List<Code> allCodes = new ArrayList<>();
-        int numberOfCombination = (int) Math.round(Math.pow(2, matrix.length));
         int[] nextCombination = new int[matrix.length];
         for (int i = 0; i < Math.pow(2, matrix.length); i++) {
             nextCombination = incrementElements(nextCombination);
@@ -33,26 +32,6 @@ class CodeUtils {
             allCodes.add(sum);
         }
         return allCodes.toArray(new Code[allCodes.size()]);
-        //    allCodes.addAll(Arrays.asList(matrix));
-        //    collectAllCodes(Arrays.asList(matrix), allCodes);
-        //    Set<Code> allCodesWithoutDuplicates = new HashSet<>(allCodes);
-        //   return allCodesWithoutDuplicates.toArray(new Code[allCodesWithoutDuplicates.size()]);
-    }
-
-    private static void collectAllCodes(List<Code> lastCodes, List<Code> allCodes) {
-        if (lastCodes.size() <= 1) {
-            return;
-        }
-
-        List<Code> newCodes = new ArrayList<>();
-        for (int i = 0; i < lastCodes.size() - 1; i++) {
-            newCodes.add(lastCodes.get(i).addAndCreateNew(lastCodes.get(i + 1)));
-        }
-        allCodes.addAll(newCodes);
-        collectAllCodes(newCodes, allCodes);
-        for (int i = 1; i < lastCodes.size() - 1; i++) {
-            collectAllCodes(lastCodes.subList(i, lastCodes.size()), allCodes);
-        }
     }
 
     static Code[] readMatrix(String fileName) {
@@ -73,6 +52,23 @@ class CodeUtils {
     static void printMatrix(Code[] matrix) {
         for (Code code : matrix) {
             System.out.println(code);
+        }
+    }
+    static void printMatrixForLaTex(List<Code> matrix) {
+        printMatrixForLaTex(matrix.toArray(new Code[matrix.size()]));
+    }
+
+    static void printMatrixForLaTex(Code[] matrix) {
+        for (Code code : matrix) {
+            for (int i = 0; i < code.size(); i++) {
+                int el = code.getElements()[i];
+                System.out.print(el);
+                if (i != code.size() - 1) {
+                    System.out.print(" & ");
+                } else {
+                    System.out.println("\\\\");
+                }
+            }
         }
     }
 
@@ -112,7 +108,7 @@ class CodeUtils {
 
     static int findMinD(Code[] matrix) {
         Code[] allCodes = collectAllCodes(matrix);
-        printMatrixForSharp(allCodes, "");
+        //printMatrixForSharp(allCodes, "");
         int minD = Integer.MAX_VALUE;
         for (Code code : allCodes) {
             int w = CodeUtils.getNumberOfOne(code);
@@ -206,5 +202,105 @@ class CodeUtils {
         int k = matrix.length;
         int n = matrix[0].size();
         return minD == 5 && n < k * minD;
+    }
+
+    public static List<Code> findZeroNeighbors(Code[] h) {
+        return findCoverageOfZeroNeighborhood(h);
+    }
+
+    private static List<Code> findCoverageOfZeroNeighborhood(Code[] h) {
+        Map<Code, List<Code>> decisiveAreas = findDecisiveAreas(h);
+        List<Code> decisiveAreaOfZero = decisiveAreas.get(Code.ZERO_CODE(h[0].size()));
+        decisiveAreas.remove(Code.ZERO_CODE(h[0].size()));
+        List<Code> allCodesNearbyZero = findAllCodesNearbyZero(decisiveAreaOfZero);
+        return findMinCoverage(allCodesNearbyZero, decisiveAreas);
+    }
+
+    private static Map<Code, List<Code>> findDecisiveAreas(Code[] h) {
+        Code[] allCodesFromH = collectAllCodes(h);
+        Map<Code, List<Code>> decisiveAreas = new HashMap<>();
+        initMapWithCodes(decisiveAreas, allCodesFromH);
+        int[] allPossibleCodes = new int[allCodesFromH[0].size()];
+        for (int i = 0; i < Math.pow(2, allCodesFromH[0].size()); i++) {
+            Code currentCodeForCheck = new Code(allPossibleCodes);
+            List<Code> nearestCodesFromCurrent = findNearestCodes(allCodesFromH, currentCodeForCheck);
+            for(Code nextCode: nearestCodesFromCurrent) {
+                decisiveAreas.get(nextCode).add(currentCodeForCheck);
+            }
+            incrementElements(allPossibleCodes);
+        }
+        return decisiveAreas;
+    }
+
+    private static void initMapWithCodes(Map<Code, List<Code>> map, Code[] codesToInitWith) {
+        for (Code code: codesToInitWith) {
+            map.put(code, new ArrayList<Code>());
+        }
+    }
+
+    private static List<Code> findNearestCodes(Code[] allOtherCodes, Code current) {
+        int minDistance = Integer.MAX_VALUE;
+        List<Code> result = new ArrayList<>();
+        for (Code code: allOtherCodes) {
+            int currentDistance = current.distance(code);
+            if (currentDistance < minDistance) {
+                minDistance = currentDistance;
+                result.clear();
+                result.add(code);
+            } else if (currentDistance == minDistance) {
+                result.add(code);
+            }
+        }
+        return result;
+    }
+
+    private static List<Code> findAllCodesNearbyZero(List<Code> decisiveAreaOfZero) {
+        Set<Code> codesNearbyZero = new HashSet<>();
+        for (Code code: decisiveAreaOfZero) {
+            for (int i = 0; i < code.size(); i++) {
+                int[] codeElements = code.getElements().clone();
+                codeElements[i] = codeElements[i] == 1 ? 0 : 1;
+                codesNearbyZero.add(new Code(codeElements));
+            }
+        }
+        for (Code code: decisiveAreaOfZero) {
+            codesNearbyZero.remove(code);
+        }
+        return new ArrayList<>(codesNearbyZero);
+    }
+
+    private static List<Code> findMinCoverage(List<Code> allCodesNearbyZero, Map<Code, List<Code>> decisiveAreas) {
+        Map<Code, List<Code>> coverage = new HashMap<>();
+        Set<Code> codesFromH = decisiveAreas.keySet();
+        initMapWithCodes(coverage, allCodesNearbyZero.toArray(new Code[allCodesNearbyZero.size()]));
+        for (Code codeNearbyZero: allCodesNearbyZero) {
+            for (Code codeFromH: codesFromH) {
+                if (decisiveAreas.get(codeFromH).contains(codeNearbyZero)) {
+                    coverage.get(codeNearbyZero).add(codeFromH);
+                }
+            }
+        }
+
+        Set<Code> result = new HashSet<>();
+        for (Code codeNearbyZero: allCodesNearbyZero) {
+            if (coverage.get(codeNearbyZero).size() == 1) {
+                result.add(coverage.get(codeNearbyZero).get(0));
+            }
+        }
+        for (Code codeNearbyZero: allCodesNearbyZero) {
+            if (coverage.get(codeNearbyZero).size() > 1) {
+                boolean isContains = false;
+                for (Code alreadyInResult: result) {
+                    if (coverage.get(codeNearbyZero).contains(alreadyInResult)) {
+                        isContains = true;
+                        break;
+                    }
+                }
+                if (!isContains) {
+                    System.out.println("ALERT!");
+                }
+            }
+        }
+        return new ArrayList<>(result);
     }
 }

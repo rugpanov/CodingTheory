@@ -1,6 +1,10 @@
 package ru.gpanov;
 
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import static ru.gpanov.CodeUtils.*;
 
 public class Main {
@@ -16,7 +20,11 @@ public class Main {
         printMatrix(matrix);
         System.out.println();
         System.out.println(String.format("Min d = %d", findMinD(matrix)));
-      // List<Code[]> goodCyclic = CodeUtils.findGoodCyclic();
+
+        List<Code> map = findZeroNeighbors(matrix);
+
+        printMatrixForLaTex(map);
+        // List<Code[]> goodCyclic = CodeUtils.findGoodCyclic();
 //        for (Code[] aGoodCyclic : goodCyclic) {
 //            printMatrix(aGoodCyclic);
 //            System.out.println();
