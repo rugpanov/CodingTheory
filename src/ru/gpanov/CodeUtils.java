@@ -327,7 +327,7 @@ class CodeUtils {
         Code previousCode = Code.ZERO_CODE(k);
         for (int i = 0; i < n; i++) {
             System.out.println("Взятие следующего ряда и удаление всех комбинаций с ним, которые нам теперь не подходят.");
-            Code nextCode = getNextAndAddIncompatibleCodes(transposedMatrix, incompatibleCodes, previousCode, r);
+            Code nextCode = getNextAndAddIncompatibleCodes(transposedMatrix, incompatibleCodes, previousCode, r, n);
             System.out.printf("Взят %d ряд генерируемой проверочной матрицы: %s, %n", i, nextCode);
             transposedMatrix.add(nextCode);
             previousCode = nextCode.clone();
@@ -370,13 +370,14 @@ class CodeUtils {
         return b;
     }
 
-    private static Code getNextAndAddIncompatibleCodes(List<Code> previouslyAdded, List<Code> incompatibleCodes, Code previousCode, int r) {
+    private static Code getNextAndAddIncompatibleCodes(List<Code> previouslyAdded, List<Code> incompatibleCodes, Code previousCode, int r, int n) {
         int k = previousCode.size();
         if (incompatibleCodes.size() == Math.pow(2, k)) {
             throw new RuntimeException("Something went wrong!");
         }
         Code next = findNext(incompatibleCodes, previousCode, r);
-        addNewIncompatibleCodes(previouslyAdded, incompatibleCodes, next, r);
+        if (previouslyAdded.size() != n - 1)
+            addNewIncompatibleCodes(previouslyAdded, incompatibleCodes, next, r);
         return next;
     }
 
