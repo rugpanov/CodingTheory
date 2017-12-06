@@ -23,6 +23,16 @@ public class Code {
         return elements;
     }
 
+    void add(Code another) {
+        if (another.size() != this.size()) {
+            throw new IllegalArgumentException("Code sizes should be the same!");
+        }
+        int[] otherElements = another.getElements();
+        for (int i = 0; i < this.size(); i++) {
+            elements[i] = (elements[i] + otherElements[i]) % 2;
+        }
+    }
+
     Code addAndCreateNew(Code another) {
         if (another.size() != this.size()) {
             throw new IllegalArgumentException("Code sizes should be the same!");

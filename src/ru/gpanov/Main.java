@@ -1,10 +1,6 @@
 package ru.gpanov;
 
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import static ru.gpanov.CodeUtils.*;
 
 public class Main {
@@ -20,10 +16,16 @@ public class Main {
         printMatrix(matrix);
         System.out.println();
         System.out.println(String.format("Min d = %d", findMinD(matrix)));
+        long startTime = System.currentTimeMillis();
+        Code[] gilbertMatrix = generateTheCodeOfVarshamovaGilberta(30, 16);
+        printMatrix(gilbertMatrix);
+        long estimatedTime = System.currentTimeMillis() - startTime;
+        System.out.println(estimatedTime / 1000 + " sec");
+        System.out.println(String.format("Min d = %d", findMinD(gilbertMatrix)));
+//        List<Code> map = findZeroNeighbors(matrix);
+//        printMatrixForLaTex(map);
 
-        List<Code> map = findZeroNeighbors(matrix);
-
-        printMatrixForLaTex(map);
+        //System.out.println(findRForVarshamovaGilberta(28, 16));
         // List<Code[]> goodCyclic = CodeUtils.findGoodCyclic();
 //        for (Code[] aGoodCyclic : goodCyclic) {
 //            printMatrix(aGoodCyclic);

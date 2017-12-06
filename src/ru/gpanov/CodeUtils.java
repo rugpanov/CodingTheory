@@ -8,14 +8,19 @@ import java.nio.file.Paths;
 import java.util.*;
 
 class CodeUtils {
-    private static int getNumberOfOne(Code code) {
+
+    private static int getNumberOfOne(int[] elements) {
         int count = 0;
-        for (int el : code.getElements()) {
+        for (int el : elements) {
             if (el > 0) {
                 count++;
             }
         }
         return count;
+    }
+
+    private static int getNumberOfOne(Code code) {
+        return getNumberOfOne(code.getElements());
     }
 
     static Code[] collectAllCodes(Code[] matrix) {
@@ -49,11 +54,16 @@ class CodeUtils {
         }
     }
 
+    static void printMatrix(List<Code> matrix) {
+        printMatrix(matrix.toArray(new Code[matrix.size()]));
+    }
+
     static void printMatrix(Code[] matrix) {
         for (Code code : matrix) {
             System.out.println(code);
         }
     }
+
     static void printMatrixForLaTex(List<Code> matrix) {
         printMatrixForLaTex(matrix.toArray(new Code[matrix.size()]));
     }
@@ -88,7 +98,7 @@ class CodeUtils {
         }
         List<Code> matrixWithZero = new ArrayList<>();
         List<Code> matrixWithOne = new ArrayList<>();
-        for (Code code: matrix) {
+        for (Code code : matrix) {
             if (code.getElements()[0] == 0) {
                 matrixWithZero.add(getReducedCode(code));
             } else {
@@ -111,7 +121,7 @@ class CodeUtils {
         //printMatrixForSharp(allCodes, "");
         int minD = Integer.MAX_VALUE;
         for (Code code : allCodes) {
-            int w = CodeUtils.getNumberOfOne(code);
+            int w = getNumberOfOne(code);
             if (w != 0 && w < minD) {
                 minD = w;
             }
@@ -224,7 +234,7 @@ class CodeUtils {
         for (int i = 0; i < Math.pow(2, allCodesFromH[0].size()); i++) {
             Code currentCodeForCheck = new Code(allPossibleCodes);
             List<Code> nearestCodesFromCurrent = findNearestCodes(allCodesFromH, currentCodeForCheck);
-            for(Code nextCode: nearestCodesFromCurrent) {
+            for (Code nextCode : nearestCodesFromCurrent) {
                 decisiveAreas.get(nextCode).add(currentCodeForCheck);
             }
             incrementElements(allPossibleCodes);
@@ -233,7 +243,7 @@ class CodeUtils {
     }
 
     private static void initMapWithCodes(Map<Code, List<Code>> map, Code[] codesToInitWith) {
-        for (Code code: codesToInitWith) {
+        for (Code code : codesToInitWith) {
             map.put(code, new ArrayList<Code>());
         }
     }
@@ -241,7 +251,7 @@ class CodeUtils {
     private static List<Code> findNearestCodes(Code[] allOtherCodes, Code current) {
         int minDistance = Integer.MAX_VALUE;
         List<Code> result = new ArrayList<>();
-        for (Code code: allOtherCodes) {
+        for (Code code : allOtherCodes) {
             int currentDistance = current.distance(code);
             if (currentDistance < minDistance) {
                 minDistance = currentDistance;
@@ -256,14 +266,14 @@ class CodeUtils {
 
     private static List<Code> findAllCodesNearbyZero(List<Code> decisiveAreaOfZero) {
         Set<Code> codesNearbyZero = new HashSet<>();
-        for (Code code: decisiveAreaOfZero) {
+        for (Code code : decisiveAreaOfZero) {
             for (int i = 0; i < code.size(); i++) {
                 int[] codeElements = code.getElements().clone();
                 codeElements[i] = codeElements[i] == 1 ? 0 : 1;
                 codesNearbyZero.add(new Code(codeElements));
             }
         }
-        for (Code code: decisiveAreaOfZero) {
+        for (Code code : decisiveAreaOfZero) {
             codesNearbyZero.remove(code);
         }
         return new ArrayList<>(codesNearbyZero);
@@ -273,8 +283,8 @@ class CodeUtils {
         Map<Code, List<Code>> coverage = new HashMap<>();
         Set<Code> codesFromH = decisiveAreas.keySet();
         initMapWithCodes(coverage, allCodesNearbyZero.toArray(new Code[allCodesNearbyZero.size()]));
-        for (Code codeNearbyZero: allCodesNearbyZero) {
-            for (Code codeFromH: codesFromH) {
+        for (Code codeNearbyZero : allCodesNearbyZero) {
+            for (Code codeFromH : codesFromH) {
                 if (decisiveAreas.get(codeFromH).contains(codeNearbyZero)) {
                     coverage.get(codeNearbyZero).add(codeFromH);
                 }
@@ -282,15 +292,15 @@ class CodeUtils {
         }
 
         Set<Code> result = new HashSet<>();
-        for (Code codeNearbyZero: allCodesNearbyZero) {
+        for (Code codeNearbyZero : allCodesNearbyZero) {
             if (coverage.get(codeNearbyZero).size() == 1) {
                 result.add(coverage.get(codeNearbyZero).get(0));
             }
         }
-        for (Code codeNearbyZero: allCodesNearbyZero) {
+        for (Code codeNearbyZero : allCodesNearbyZero) {
             if (coverage.get(codeNearbyZero).size() > 1) {
                 boolean isContains = false;
-                for (Code alreadyInResult: result) {
+                for (Code alreadyInResult : result) {
                     if (coverage.get(codeNearbyZero).contains(alreadyInResult)) {
                         isContains = true;
                         break;
@@ -302,5 +312,153 @@ class CodeUtils {
             }
         }
         return new ArrayList<>(result);
+    }
+
+    public static Code[] generateTheCodeOfVarshamovaGilberta(int n, int k) {
+        System.out.printf("Начато построение кода, удовлетворяющего границе Варшамова-Гилберта с n = %d, k = %d %n", n, k);
+        int r = findDForVarshamovaGilberta(n, k);
+        k = n - k; //т.к. коды для проверочной
+        System.out.printf("Для заданных n и k, r = %d %n", r);
+
+        List<Code> incompatibleCodes = new ArrayList<>();
+        incompatibleCodes.add(Code.ZERO_CODE(k));
+        List<Code> transposedMatrix = new ArrayList<>();
+        System.out.println("Взятые коды:");
+        Code previousCode = Code.ZERO_CODE(k);
+        for (int i = 0; i < n; i++) {
+            System.out.println("Взятие следующего ряда и удаление всех комбинаций с ним, которые нам теперь не подходят.");
+            Code nextCode = getNextAndAddIncompatibleCodes(transposedMatrix, incompatibleCodes, previousCode, r);
+            System.out.printf("Взят %d ряд генерируемой проверочной матрицы: %s, %n", i, nextCode);
+            transposedMatrix.add(nextCode);
+            previousCode = nextCode.clone();
+        }
+        return transposeMatrix(transposedMatrix);
+    }
+
+    private static ArrayList<Code> generateAllPossibleCodes(int k) {
+        Code[] allPossibleCodes = new Code[(int) Math.pow(2, k)];
+        System.out.println(allPossibleCodes.length);
+        int[] currentCode = new int[k];
+        for (int i = 0; i < allPossibleCodes.length; i++) {
+            allPossibleCodes[i] = new Code(currentCode);
+            incrementElements(currentCode);
+        }
+        return new ArrayList<>(Arrays.asList(allPossibleCodes));
+    }
+
+    private static int findDForVarshamovaGilberta(int n, int k) {
+        int sum = (int) (Math.pow(2, n - k) - 1);
+        int i;
+        for (i = 0; sum > 0; i++) {
+            sum -= binomial(n - 1, i + 1);
+        }
+        return i + 1;
+    }
+
+    private static int binomial(int n, int k) {
+        if (k > n - k) {
+            return binomial(n, n - k);
+        }
+        int b = 1;
+        int i = 1;
+        int m = n;
+        while (i <= k) {
+            b = b * m / i;
+            i++;
+            m--;
+        }
+        return b;
+    }
+
+    private static Code getNextAndAddIncompatibleCodes(List<Code> previouslyAdded, List<Code> incompatibleCodes, Code previousCode, int r) {
+        int k = previousCode.size();
+        if (incompatibleCodes.size() == Math.pow(2, k)) {
+            throw new RuntimeException("Something went wrong!");
+        }
+        Code next = findNext(incompatibleCodes, previousCode, r);
+        addNewIncompatibleCodes(previouslyAdded, incompatibleCodes, next, r);
+        return next;
+    }
+
+    private static Code findNext(List<Code> incompatibleCodes, Code previous, int r) {
+        int k = previous.size();
+        Code currentCode = new Code(incrementElements(previous.getElements()));
+        while (!currentCode.equals(Code.ZERO_CODE(k))) {
+            if (incompatibleCodes.contains(currentCode)) {
+                incrementElements(currentCode.getElements());
+                continue;
+            }
+            return currentCode;
+        }
+        throw new RuntimeException("Impossible to build the code");
+    }
+
+    private static void addNewIncompatibleCodes(List<Code> previouslyAdded, List<Code> incompatibleCodes, Code current, int r) {
+        for (int i = 1; i < r - 1; i++) {
+            int[] currentCombination = new int[previouslyAdded.size()];
+            for (int combinationCounter = 0; combinationCounter < Math.pow(2, previouslyAdded.size()); combinationCounter++) {
+                if (getNumberOfOne(currentCombination) > i) {
+                    incrementElements(currentCombination);
+                    continue;
+                }
+                Code incompatible = Code.ZERO_CODE(current.size());
+                incompatible.add(current);
+                for (int codeIndex = 0; codeIndex < previouslyAdded.size(); codeIndex++) {
+                    if (currentCombination[codeIndex] == 1) {
+                        incompatible.add(previouslyAdded.get(codeIndex));
+                    }
+                }
+                incrementElements(currentCombination);
+                incompatibleCodes.add(incompatible);
+            }
+        }
+    }
+
+//    private static Code getNextAndRemoveIncompatibleFromPossibleCodes(List<Code> previouslyAdded, List<Code> allPossibleCodes, int r) {
+//        if (allPossibleCodes.size() == 0) {
+//            throw new RuntimeException("Something went wrong!");
+//        }
+//        Code possibleNext = allPossibleCodes.get(0);
+//        removeIncompatible(previouslyAdded, allPossibleCodes, possibleNext, r);
+//        return possibleNext;
+//    }
+//
+//    private static void removeIncompatible(List<Code> previouslyAdded, List<Code> allPossibleCodes, Code possibleNext, int r) {
+//        for (int i = 1; i < r - 1; i++) {
+//            int[] currentCombination = new int[previouslyAdded.size()];
+//            for (int combinationCounter = 0; combinationCounter < Math.pow(2, previouslyAdded.size()); combinationCounter++) {
+//                if (getNumberOfOne(currentCombination) > i) {
+//                    incrementElements(currentCombination);
+//                    continue;
+//                }
+//                Code incompatible = Code.ZERO_CODE(possibleNext.size());
+//                incompatible.add(possibleNext);
+//                for (int codeIndex = 0; codeIndex < previouslyAdded.size(); codeIndex++) {
+//                    if (currentCombination[codeIndex] == 1) {
+//                        incompatible.add(previouslyAdded.get(codeIndex));
+//                    }
+//                }
+//                incrementElements(currentCombination);
+//                allPossibleCodes.remove(incompatible);
+//            }
+//        }
+//    }
+
+    public static Code[] transposeMatrix(List<Code> matrix) {
+        return transposeMatrix(matrix.toArray(new Code[matrix.size()]));
+    }
+
+    public static Code[] transposeMatrix(Code[] matrix) {
+        int n = matrix.length;
+        int k = matrix[0].size();
+        Code[] transposedMatrix = new Code[k];
+        for (int oldRowIndex = 0; oldRowIndex < k; oldRowIndex++) {
+            int[] elements = new int[n];
+            for (int oldCodeIndex = 0; oldCodeIndex < n; oldCodeIndex++) {
+                elements[oldCodeIndex] = matrix[oldCodeIndex].getElements()[oldRowIndex];
+            }
+            transposedMatrix[oldRowIndex] = new Code(elements);
+        }
+        return transposedMatrix;
     }
 }
